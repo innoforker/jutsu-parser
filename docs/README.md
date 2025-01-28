@@ -9,7 +9,7 @@
 
 # Functions
 
-- get_default_anime_list() returns a list of dictionaries (the anime list on the main page)
+- get_(async)_default_anime_list() returns a list of dictionaries (the anime list on the main page)
 
   - The dictionary structure:
     - **@id**
@@ -33,7 +33,7 @@
       \# **With new page**
       print(parse_info.get_default_anime_list(5))</code>
 
-- get_anime_link_by_query() returns just the link to the release by query. If not found, returns \_None\*.
+- get_(async)_anime_link_by_query() returns just the link to the release by query. If not found, returns \_None\*.
 
   - Link format
     - https://jut.su/NAME
@@ -41,7 +41,7 @@
     - **query**
       - The search query to search for the release
 
-- get_random_technique() returns a dictionary of random technique
+- get_(async)_random_technique() returns a dictionary of random technique
   - The dictionary structure:
     - **title**
       - The title of a technique
