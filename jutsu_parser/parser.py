@@ -41,14 +41,18 @@ class JutsuParser:
         for br in soup.find_all("br"):
             br.replace_with("\n") # To fix \r\n in text
         return soup
+    # _fd - short for _find_div
+    def _fd(self, soup, class_name, text=False):
+        div = soup.find("div", {"class": class_name})
+        return div if not text else div.text()
 
     def _get_card_info(self, card, id):
-        anime_info = card.find("a")
-        anime_url = self.target_url + anime_info["href"][1:][:-1]
-        background_url_style = anime_info.find("div", {"class": "all_anime_image"})["style"]
-        anime_image_url = background_url_style.split("('", 1)[1].split("')")[0]
-        anime_title = anime_info.find("div", {"class": "aaname"}).text
-        extra_info = anime_info.find("div", {"class": "aailines"}).text
+        anime_info = card.find("a") # "a" element with all anime card's in info
+        anime_url = self.target_url + anime_info["href"][1:][:-1] # URL
+        bg_style = _fd(anime_info, "all_anime_image")["style"] # background url image
+        anime_image_url = bg_style.split("('", 1)[1].split("')")[0] # url without background-url
+        anime_title = _fd(anime_info, "aaname", True)
+        extra_info = _fd(anime_info, "aailines", True)
         if anime_url and anime_image_url and anime_title and extra_info:
             return {"@id": id, "title": anime_title, "image_url": anime_image_url, "release_url": anime_url, "extra": extra_info}
         return None
