@@ -84,35 +84,35 @@ class JutsuParser:
 # ! DANGER. IT MAY BE UNSTABLE
 #########################################
 class Nurparse(JutsuParser):
+    async def _get_async_soup(self, response):
+        await response.raise_for_status()
+        soup = BeautifulSoup(await response.text(), "html.parser")
+        for br in soup.find_all("br"):
+            br.replace_with("\n")
+        return soup
     async def get_async_default_anime_list(self, page=1):
         async with aiohttp.ClientSession(headers=self.headers) as session:
             if page <= 1:
                 async with session.get(self.target_url + "anime") as response:
-                    response.raise_for_status()
-                    soup = BeautifulSoup(await response.text(), "html.parser")
-                    for br in soup.find_all("br"):
-                        br.replace_with("\n")
+                    soup = await self._get_async_soup(response)
                     all_anime = self._find_anime_cards(soup)
                     try:
                         anime_list = [self._get_card_info(anime_release, i) for i, anime_release in enumerate(all_anime)]
                     except IndexError:
                         print("Failed to retrieve anime list.")
                         return None
-                    return anime_list or None
+                    return anime_list
             else:
                 page_payload = {"ajax_load": "yes", "start_from_page": page}
                 async with session.post(self.target_url + "anime", data=page_payload) as response:
-                    response.raise_for_status()
-                    soup = BeautifulSoup(await response.text(), "html.parser")
-                    for br in soup.find_all("br"):
-                        br.replace_with("\n")
+                    soup = self._get_async_soup(response)
                     all_anime = self._find_anime_cards(soup)
                     try:
                         anime_list = [self._get_card_info(anime_release, i) for i, anime_release in enumerate(all_anime)]
                     except IndexError:
                         print("Failed to retrieve anime list.")
                         return None
-                    return anime_list or None
+                    return anime_list
     async def get_async_anime_link_by_query(self, query):
         search_payload = {
                 "makeme": "yes",
