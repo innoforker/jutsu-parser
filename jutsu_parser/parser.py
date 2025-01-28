@@ -5,10 +5,11 @@ sys.path.append("..")
 from jutsu_parser import __WEBSITE_URL__
 from fake_useragent import UserAgent
 import requests
+import aiohttp
 
 class JutsuParser:
     def __init__(self, web_cache_path="web-cache/jutsu_parser_cache"):
-        self.url = __WEBSITE_URL__
+        self.target_url = __WEBSITE_URL__
         self.headers = {
             "User-Agent": UserAgent().random
         }
@@ -43,7 +44,7 @@ class JutsuParser:
 
     def _get_card_info(self, card, id):
         anime_info = card.find("a")
-        anime_url = self.url + anime_info["href"][1:][:-1]
+        anime_url = self.target_url + anime_info["href"][1:][:-1]
         background_url_style = anime_info.find("div", {"class": "all_anime_image"})["style"]
         anime_image_url = background_url_style.split("('", 1)[1].split("')")[0]
         anime_title = anime_info.find("div", {"class": "aaname"}).text
@@ -54,7 +55,7 @@ class JutsuParser:
     def _find_anime_cards(self, soup):
         return soup.find_all("div", {"class": "all_anime_global"})
     def get_default_anime_list(self, page = 1):
-        nav_url = f"{self.url}anime"
+        nav_url = f"{self.target_url}anime"
         soup = self._get_soup(nav_url, page)
         all_anime = self._find_anime_cards(soup)
         try:
@@ -65,13 +66,76 @@ class JutsuParser:
         return anime_list or None
     # Returns just a link to your anime by query (because jut.su has no search results)
     def get_anime_link_by_query(self, query):
-        nav_url = f"{self.url}search"
+        nav_url = f"{self.target_url}search"
         return self._get_soup(url=nav_url, search=True, search_query=query)
     def get_random_technique(self):
-        soup = self._get_soup(self.url, fast_mode=True)
+        soup = self._get_soup(self.target_url, fast_mode=True)
         technique = soup.find("div", {"class": "rand_tech_widget"}).find("a", {"class": "media_link"})
         return {
             "title": technique.find("span").text,
             "url": technique["href"],
             "image_url": technique.find("img")["src"]
         }
+        
+        
+#########################################
+# THE ASYNCHRONOUS VERSION OF JutsuParser
+# ! WITHOUT CACHING
+# ! DANGER. IT MAY BE UNSTABLE
+#########################################
+class Nurparse(JutsuParser):
+    def __init__(self):
+        self.target_url = __WEBSITE_URL__
+        self.headers = {"User-Agent": UserAgent().random}
+
+    async def get_async_default_anime_list(self, page=1):
+        async with aiohttp.ClientSession(headers=self.headers) as session:
+            if page <= 1:
+                async with session.get(self.target_url + "anime") as response:
+                    response.raise_for_status()
+                    soup = BeautifulSoup(await response.text(), "html.parser")
+                    for br in soup.find_all("br"):
+                        br.replace_with("\n")
+                    all_anime = self._find_anime_cards(soup)
+                    try:
+                        anime_list = [self._get_card_info(anime_release, i) for i, anime_release in enumerate(all_anime)]
+                    except IndexError:
+                        print("Failed to retrieve anime list.")
+                        return None
+                    return anime_list or None
+            else:
+                page_payload = {"ajax_load": "yes", "start_from_page": page}
+                async with session.post(self.target_url + "anime", data=page_payload) as response:
+                    response.raise_for_status()
+                    soup = BeautifulSoup(await response.text(), "html.parser")
+                    for br in soup.find_all("br"):
+                        br.replace_with("\n")
+                    all_anime = self._find_anime_cards(soup)
+                    try:
+                        anime_list = [self._get_card_info(anime_release, i) for i, anime_release in enumerate(all_anime)]
+                    except IndexError:
+                        print("Failed to retrieve anime list.")
+                        return None
+                    return anime_list or None
+    async def get_async_anime_link_by_query(self, query):
+        search_payload = {
+                "makeme": "yes",
+                "ystext": query,
+        }
+        async with aiohttp.ClientSession(headers=self.headers) as session:
+            async with session.post(self.target_url + "search", data=search_payload) as response:
+                response.raise_for_status()
+                return str(response.url)[:-1] if 'search' not in str(response.url) else None
+    async def get_async_random_technique(self):
+        async with aiohttp.ClientSession(headers=self.headers) as session:
+            async with session.get(self.target_url) as response:
+                response.raise_for_status()
+                soup = BeautifulSoup(await response.text(), "html.parser")
+                for br in soup.find_all("br"):
+                    br.replace_with("\n")
+                technique = soup.find("div", {"class": "rand_tech_widget"}).find("a", {"class": "media_link"})
+                return {
+                    "title": technique.find("span").text,
+                    "url": technique["href"],
+                    "image_url": technique.find("img")["src"]
+                }

@@ -2,6 +2,7 @@ import sys
 sys.path.append("../..")
 from jutsu_parser import parser
 from random import randint
+from asyncio import run
 
 def log_info(message, success=True):
     print(f"[{'SUCCESS or NEUTRAL' if success else 'FAIL'}] {message}")
@@ -61,9 +62,39 @@ def test_random_technique():
     else:
         log_info("Failed to retrieve random technique.", False)
     log_info("test_random_technique completed.")
+async def test_async_default_anime_list():
+    _parser = parser.Nurparse()
+    log_info("Creating anime list (in async mode)")
+    anime_list = await _parser.get_async_default_anime_list()
+    print(anime_list) if anime_list else log_info("Failed to retrieve in async")
+    log_info("test_async_default_anime_list completed.")
+async def test_async_another_page_default_list():
+    page = randint(3, 10)
+    log_info(f"Page #{page} (in async mode)")
+    _parser = parser.Nurparse()
+    anime_list = await _parser.get_async_default_anime_list(page)
+    print(anime_list) if anime_list else log_info(f"Failed to retrieve on page {page} in async", False)
+    log_info("test_async_another_page_default_list completed.")
+async def test_async_search_anime_url_by_query():
+    query = "Tokyo Ghoul"
+    log_info(f"Searching for anime with query: {query} (in async mode)")
+    _parser = parser.Nurparse()
+    anime_url = await _parser.get_async_anime_link_by_query(query)
+    print(anime_url) if anime_url else log_info(f"Results not found.", False)
+    log_info("test_async_search_anime_url_by_query completed.")
+async def test_async_random_technique():
+    _parser = parser.Nurparse()
+    log_info("Creating random technique (in async mode)")
+    technique = await _parser.get_async_random_technique()
+    print(technique) if technique else log_info("Failed to retrieve in async", False)
+    log_info("test_async_random_technique completed.")
 if __name__ == "__main__":
     test_default_anime_list()
     test_raw_anime_list()
     test_another_page_default_list()
     test_search_anime_url_by_query()
     test_random_technique()
+    run(test_async_default_anime_list())
+    run(test_async_another_page_default_list())
+    run(test_async_search_anime_url_by_query())
+    run(test_async_random_technique())
