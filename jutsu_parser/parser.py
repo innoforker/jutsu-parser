@@ -84,10 +84,6 @@ class JutsuParser:
 # ! DANGER. IT MAY BE UNSTABLE
 #########################################
 class Nurparse(JutsuParser):
-    def __init__(self):
-        self.target_url = __WEBSITE_URL__
-        self.headers = {"User-Agent": UserAgent().random}
-
     async def get_async_default_anime_list(self, page=1):
         async with aiohttp.ClientSession(headers=self.headers) as session:
             if page <= 1:
@@ -131,8 +127,6 @@ class Nurparse(JutsuParser):
             async with session.get(self.target_url) as response:
                 response.raise_for_status()
                 soup = BeautifulSoup(await response.text(), "html.parser")
-                for br in soup.find_all("br"):
-                    br.replace_with("\n")
                 technique = soup.find("div", {"class": "rand_tech_widget"}).find("a", {"class": "media_link"})
                 return {
                     "title": technique.find("span").text,
