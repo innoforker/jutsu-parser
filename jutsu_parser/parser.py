@@ -120,13 +120,12 @@ class Nurparse(JutsuParser):
         }
         async with aiohttp.ClientSession(headers=self.headers) as session:
             async with session.post(self.target_url + "search", data=search_payload) as response:
-                response.raise_for_status()
+                await response.raise_for_status()
                 return str(response.url)[:-1] if 'search' not in str(response.url) else None
     async def get_async_random_technique(self):
         async with aiohttp.ClientSession(headers=self.headers) as session:
             async with session.get(self.target_url) as response:
-                response.raise_for_status()
-                soup = BeautifulSoup(await response.text(), "html.parser")
+                soup = self._get_async_soup(response)
                 technique = soup.find("div", {"class": "rand_tech_widget"}).find("a", {"class": "media_link"})
                 return {
                     "title": technique.find("span").text,
