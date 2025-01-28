@@ -116,7 +116,7 @@ class Nurparse(JutsuParser):
                     return anime_list
             else:
                 self.page_payload["start_from_page"] = page
-                async with session.post(self.target_url + "anime", data=page_payload) as response:
+                async with session.post(self.target_url + "anime", data=self.page_payload) as response:
                     soup = self._get_async_soup(response)
                     all_anime = self._find_anime_cards(soup)
                     try:
