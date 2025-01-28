@@ -17,4 +17,15 @@ from jutsu_parser import parser
 _parser = parser.JutsuParser()
 technique = _parser.get_random_technique()
 print(technique["title"]) # Returning the title of random technique
+```  
+**Asynchronous usage**  
+Just import the module and chill. Use Nurparse for asynchronous operations. And remember, **you don't need caching and web cache path when you're asynchronous.** Nurparse fully based on JutsuParser, but I don't recommend to use sync functions in class intended for async :3
+```py
+import asyncio
+from jutsu_parser import parser
+async def main():
+    async_parser = parser.Nurparse() # Different class for async
+    technique = await async_parser.get_async_random_technique()
+    print(technique) # Raw printing
+asyncio.run(main())
 ```
