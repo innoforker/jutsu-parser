@@ -14,6 +14,14 @@ class JutsuParser:
             "User-Agent": UserAgent().random
         }
         self.web_cache_path = web_cache_path
+        self.page_payload = {
+            "ajax_load": "yes",
+            "start_from_page": 1,
+        }
+        self.search_payload = {
+            "makeme": "yes",
+            "ystext": "",
+        }
     
     def _get_requests_session(self, expiration_after=300):
         return req.CachedSession(cache_name=self.web_cache_path, expire_after=expiration_after, allowable_codes=[200, 301]) # Session will be expired after 300 seconds
@@ -107,7 +115,7 @@ class Nurparse(JutsuParser):
                         return None
                     return anime_list
             else:
-                page_payload = {"ajax_load": "yes", "start_from_page": page}
+                self.page_payload["start_from_page"] = page
                 async with session.post(self.target_url + "anime", data=page_payload) as response:
                     soup = self._get_async_soup(response)
                     all_anime = self._find_anime_cards(soup)
@@ -118,12 +126,9 @@ class Nurparse(JutsuParser):
                         return None
                     return anime_list
     async def get_async_anime_link_by_query(self, query):
-        search_payload = {
-                "makeme": "yes",
-                "ystext": query,
-        }
+        self.search_payload["ystext"] = query
         async with aiohttp.ClientSession(headers=self.headers) as session:
-            async with session.post(self.target_url + "search", data=search_payload) as response:
+            async with session.post(self.target_url + "search", data=self.search_payload) as response:
                 await response.raise_for_status()
                 return str(response.url)[:-1] if 'search' not in str(response.url) else None
     async def get_async_random_technique(self):
