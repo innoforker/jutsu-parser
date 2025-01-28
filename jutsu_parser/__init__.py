@@ -1,0 +1,1 @@
+__WEBSITE_URL__ = "https://jut.su/" # Change if you need to

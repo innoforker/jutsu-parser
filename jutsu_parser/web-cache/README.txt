@@ -1,0 +1,1 @@
+The folder contains only .sqlite files in order for the requests-cache library to work correctly.
