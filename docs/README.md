@@ -49,3 +49,5 @@
       - The URL of a technique's extra information
     - **image_url**
       - The bad-quality image URL of a technique (image is a frame from anime by default)
+
+*(async) - optional, can only be used in the **Nurparse()** class as an asynchronous function*
