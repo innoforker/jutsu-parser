@@ -75,7 +75,7 @@ class JutsuParser:
         except IndexError:
             print("Failed to retrieve anime list.")
             return None
-        return anime_list or None
+        return anime_list
     # Returns just a link to your anime by query (because jut.su has no search results)
     def get_anime_link_by_query(self, query):
         nav_url = f"{self.target_url}search"
