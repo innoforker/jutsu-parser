@@ -135,3 +135,4 @@ class Nurparse(JutsuParser):
                     "url": technique["href"],
                     "image_url": technique.find("img")["src"]
                 }
+# @TODO: Add JutsuTV class for downloading anime releases using the official player
