@@ -27,14 +27,8 @@ class JutsuParser:
         return req.CachedSession(cache_name=self.web_cache_path, expire_after=expiration_after, allowable_codes=[200, 301]) # Session will be expired after 300 seconds
     def _get_soup(self, url, page=1, search=False, search_query=None, fast_mode=False):
         session = self._get_requests_session() if not fast_mode else requests # For random techniques
-        page_payload = {
-            "ajax_load": "yes",
-            "start_from_page": page,
-        }
-        search_payload = {
-            "makeme": "yes",
-            "ystext": search_query,
-        }
+        self.page_payload["start_from_page"] = page
+        self.search_payload["ystext"] = search_query
         response = None
         if page <= 1:
             if search and search_query:
