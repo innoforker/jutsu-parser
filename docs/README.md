@@ -69,4 +69,4 @@ _(async) - optional, can only be used in the **Nurparse()** class as an asynchro
     - save_path
       - Internal URI path where to save the video
     - proxy
-      - Link to your proxy if you need it (the player may not work on various IPs)
+      - A dictionary of your proxies in format `{"protocol": "url", "protocol": "url", ...}`

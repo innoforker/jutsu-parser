@@ -147,7 +147,8 @@ class JutsuTV:
             "User-Agent": UserAgent().random
         }
         self.url = __WEBSITE_URL__
-    # You can specify anime url (example: "https://jut.su/NAME") or just href (example: "/NAME") to download it
+    # You can specify anime url (example: "https://jut.su/NAME/season-1/episode-1.html") or just href (example: "/NAME/season-1/episode-1.html") to download it.
+    # Keep in mind that you need to specify in your link full path (including SEASON and EPISODE + .html extension), but anime link may not contain season in the path. Example: https://jut.su/toradora/episode-1.html
     async def get_video_link_async(self, anime_url_or_href):
         is_url = match(r"(https?://jut\.su/[^/]+)", anime_url_or_href)
         if is_url:
@@ -198,11 +199,11 @@ class JutsuTV:
             return None
         video_url = player["src"]
         return video_url or None
-    async def download_video_async(self, video_url, save_path, proxy=None):
+    async def download_video_async(self, video_url, save_path, proxies=None):
         video_url = await self.get_video_link_async(video_url)
         if video_url:
             async with aiohttp.ClientSession(headers=self.headers) as session:
-                async with session.get(video_url, proxy=proxy) as response:
+                async with session.get(video_url, proxy=proxies) as response:
                     with open(save_path, "wb") as file:
                         while True:
                             chunk = await response.content.read(1024)
@@ -214,10 +215,10 @@ class JutsuTV:
         else:
             print("Failed to download the video.")
             return False
-    def download_video_sync(self, video_url, save_path, proxy=None):
+    def download_video_sync(self, video_url, save_path, proxies=None):
         video_url = self.get_video_link_sync(video_url)
         if video_url:
-            response = requests.get(video_url, headers=self.headers, proxy=proxy)
+            response = requests.get(video_url, headers=self.headers, proxies=proxies)
             with open(save_path, "wb") as file:
                 for chunk in response.iter_content(chunk_size=1024):
                     if chunk:
