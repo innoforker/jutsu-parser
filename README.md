@@ -28,4 +28,9 @@ async def main():
     technique = await async_parser.get_async_random_technique()
     print(technique) # Raw printing
 asyncio.run(main())
-```
+```  
+
+# README in different languages
+[🇷🇺 README Russian translation](README-ru.md)
+[🇷🇺 Docs Russian translation](docs/README-ru.md)
+[🇷🇺 Security Policy Russian translation](SECURITY-ru.md)
