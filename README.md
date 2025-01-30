@@ -31,6 +31,6 @@ asyncio.run(main())
 ```  
 
 # README in different languages
-[🇷🇺 README Russian translation](README-ru.md)
-[🇷🇺 Docs Russian translation](docs/README-ru.md)
-[🇷🇺 Security Policy Russian translation](SECURITY-ru.md)
+[🇷🇺 README Russian translation](README-ru.md)  
+[🇷🇺 Docs Russian translation](docs/README-ru.md)  
+[🇷🇺 Security Policy Russian translation](SECURITY-ru.md)  
