@@ -68,5 +68,5 @@ _(async) - optional, can only be used in the **Nurparse()** class as an asynchro
       - Full path to the MP4 file from the original jut.su player (Take this from previous function)
     - save_path
       - Internal URI path where to save the video
-    - proxy
+    - proxies
       - A dictionary of your proxies in format `{"protocol": "url", "protocol": "url", ...}`
