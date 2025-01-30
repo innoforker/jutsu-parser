@@ -1,3 +1,8 @@
+# README in different languages
+[🇷🇺 README Russian translation](README-ru.md)  
+[🇷🇺 Docs Russian translation](docs/README-ru.md)  
+[🇷🇺 Security Policy Russian translation](SECURITY-ru.md)
+
 # Jut.su Web Parser
 THE PROJECT IS CLOSED. THERE WON'T BE NEW COMMITS FROM ME, THE AUTHOR. Check [Sec Policy](SECURITY.md).  
 **Description**  
@@ -29,8 +34,3 @@ async def main():
     print(technique) # Raw printing
 asyncio.run(main())
 ```  
-
-# README in different languages
-[🇷🇺 README Russian translation](README-ru.md)  
-[🇷🇺 Docs Russian translation](docs/README-ru.md)  
-[🇷🇺 Security Policy Russian translation](SECURITY-ru.md)  
