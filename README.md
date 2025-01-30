@@ -1,5 +1,5 @@
 # Jut.su Web Parser
-THE PROJECT IS CLOSED. THERE WON'T BE NEW COMMITS FROM ME, THE AUTHOR. Check [Sec Policy](SECURITY.md).
+THE PROJECT IS CLOSED. THERE WON'T BE NEW COMMITS FROM ME, THE AUTHOR. Check [Sec Policy](SECURITY.md).  
 **Description**  
 Jut.su Parser allows you to use features of the russian anime website [jut.su](https://jut.su) in your Python projects. **Parse animes from the main page, search them, download them and you can even get random techniques from the site!** [Know more about the security policy to prevent future troubles](SECURITY.md).<br /><br />
 **Docs**  
