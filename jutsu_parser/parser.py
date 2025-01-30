@@ -199,6 +199,8 @@ class JutsuTV:
             return None
         video_url = player["src"]
         return video_url or None
+
+    # WARNING! THESE TWO FUNCTIONS WAS NEVER TESTED BECAUSE OF MY BROWSER'S TROUBLES WITH THE PLAYER. TRY IT YOURSELF.
     async def download_video_async(self, video_url, save_path, proxies=None):
         video_url = await self.get_video_link_async(video_url)
         if video_url:
