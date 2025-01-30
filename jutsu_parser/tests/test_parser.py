@@ -88,6 +88,12 @@ async def test_async_random_technique():
     technique = await _parser.get_async_random_technique()
     print(technique) if technique else log_info("Failed to retrieve in async", False)
     log_info("test_async_random_technique completed.")
+
+def test_get_video_link_sync():
+    _tv = parser.JutsuTV()
+    href = "/tokushu/season-1/episode-1.html"
+    video_link = _tv.get_video_link_sync(href)
+    print(f"Video link: {video_link} with href: {href}")
 if __name__ == "__main__":
     test_default_anime_list()
     test_raw_anime_list()
@@ -98,3 +104,5 @@ if __name__ == "__main__":
     run(test_async_another_page_default_list())
     run(test_async_search_anime_url_by_query())
     run(test_async_random_technique())
+    test_get_video_link_sync()
+    # Test other methods by yourself

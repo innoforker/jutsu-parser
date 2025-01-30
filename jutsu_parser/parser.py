@@ -6,6 +6,7 @@ from jutsu_parser import __WEBSITE_URL__
 from fake_useragent import UserAgent
 import requests
 import aiohttp
+from re import match
 
 class JutsuParser:
     def __init__(self, web_cache_path="web-cache/jutsu_parser_cache"):
@@ -25,19 +26,19 @@ class JutsuParser:
     
     def _get_requests_session(self, expiration_after=300):
         return req.CachedSession(cache_name=self.web_cache_path, expire_after=expiration_after, allowable_codes=[200, 301]) # Session will be expired after 300 seconds
-    def _get_soup(self, url, page=1, search=False, search_query=None, fast_mode=False):
+    def _get_soup(self, url, page=1, search_query=None, fast_mode=False):
         session = self._get_requests_session() if not fast_mode else requests # For random techniques
         self.page_payload["start_from_page"] = page
         self.search_payload["ystext"] = search_query
         response = None
         if page <= 1:
-            if search and search_query:
-                redirect_url = session.post(url, timeout=10, headers=self.headers, data=search_payload).url
+            if search_query:
+                redirect_url = session.post(url, timeout=10, headers=self.headers, data=self.search_payload).url
                 return redirect_url[:-1] if 'search' not in redirect_url else None # Check if there are no results
             else:
                 response = session.get(url, timeout=10, headers=self.headers)
         else:
-            response = session.post(url, data=page_payload, timeout=10, headers=self.headers)
+            response = session.post(url, data=self.page_payload, timeout=10, headers=self.headers)
         response.raise_for_status() # Throws an exception if code is not 200
         soup = BeautifulSoup(response.text, "html.parser")
         for br in soup.find_all("br"):
@@ -45,16 +46,18 @@ class JutsuParser:
         return soup
     # _fd - short for _find_div
     def _fd(self, soup, class_name, text=False):
-        div = soup.find("div", {"class": class_name})
-        return div if not text else div.text()
+        if soup:
+            div = soup.find("div", {"class": class_name})
+            return div if not text else div.text.strip()
+        return None
 
     def _get_card_info(self, card, id):
         anime_info = card.find("a") # "a" element with all anime card's in info
         anime_url = self.target_url + anime_info["href"][1:][:-1] # URL
-        bg_style = _fd(anime_info, "all_anime_image")["style"] # background url image
+        bg_style = self._fd(anime_info, "all_anime_image")["style"] # background url image
         anime_image_url = bg_style.split("('", 1)[1].split("')")[0] # url without background-url
-        anime_title = _fd(anime_info, "aaname", True)
-        extra_info = _fd(anime_info, "aailines", True)
+        anime_title = self._fd(anime_info, "aaname", True)
+        extra_info = self._fd(anime_info, "aailines", True)
         if anime_url and anime_image_url and anime_title and extra_info:
             return {"@id": id, "title": anime_title, "image_url": anime_image_url, "release_url": anime_url, "extra": extra_info}
         return None
@@ -73,7 +76,7 @@ class JutsuParser:
     # Returns just a link to your anime by query (because jut.su has no search results)
     def get_anime_link_by_query(self, query):
         nav_url = f"{self.target_url}search"
-        return self._get_soup(url=nav_url, search=True, search_query=query)
+        return self._get_soup(url=nav_url, search_query=query)
     def get_random_technique(self):
         soup = self._get_soup(self.target_url, fast_mode=True)
         technique = soup.find("div", {"class": "rand_tech_widget"}).find("a", {"class": "media_link"})
@@ -91,7 +94,7 @@ class JutsuParser:
 #########################################
 class Nurparse(JutsuParser):
     async def _get_async_soup(self, response):
-        await response.raise_for_status()
+        response.raise_for_status()
         soup = BeautifulSoup(await response.text(), "html.parser")
         for br in soup.find_all("br"):
             br.replace_with("\n")
@@ -101,7 +104,7 @@ class Nurparse(JutsuParser):
             if page <= 1:
                 async with session.get(self.target_url + "anime") as response:
                     soup = await self._get_async_soup(response)
-                    all_anime = self._find_anime_cards(soup)
+                    all_anime = soup.find_all("div", {"class": "all_anime_global"})
                     try:
                         anime_list = [self._get_card_info(anime_release, i) for i, anime_release in enumerate(all_anime)]
                     except IndexError:
@@ -111,28 +114,116 @@ class Nurparse(JutsuParser):
             else:
                 self.page_payload["start_from_page"] = page
                 async with session.post(self.target_url + "anime", data=self.page_payload) as response:
-                    soup = self._get_async_soup(response)
-                    all_anime = self._find_anime_cards(soup)
+                    soup = await self._get_async_soup(response)
+                    all_anime = soup.find_all("div", {"class": "all_anime_global"})
                     try:
                         anime_list = [self._get_card_info(anime_release, i) for i, anime_release in enumerate(all_anime)]
                     except IndexError:
                         print("Failed to retrieve anime list.")
                         return None
                     return anime_list
+        return None
     async def get_async_anime_link_by_query(self, query):
         self.search_payload["ystext"] = query
         async with aiohttp.ClientSession(headers=self.headers) as session:
             async with session.post(self.target_url + "search", data=self.search_payload) as response:
-                await response.raise_for_status()
+                response.raise_for_status()
                 return str(response.url)[:-1] if 'search' not in str(response.url) else None
     async def get_async_random_technique(self):
         async with aiohttp.ClientSession(headers=self.headers) as session:
             async with session.get(self.target_url) as response:
-                soup = self._get_async_soup(response)
+                soup = await self._get_async_soup(response)
                 technique = soup.find("div", {"class": "rand_tech_widget"}).find("a", {"class": "media_link"})
                 return {
                     "title": technique.find("span").text,
                     "url": technique["href"],
                     "image_url": technique.find("img")["src"]
                 }
-# @TODO: Add JutsuTV class for downloading anime releases using the official player
+
+# Class for downloading anime using the original player
+class JutsuTV:
+    def __init__(self):
+        self.headers = {
+            "User-Agent": UserAgent().random
+        }
+        self.url = __WEBSITE_URL__
+    # You can specify anime url (example: "https://jut.su/NAME") or just href (example: "/NAME") to download it
+    async def get_video_link_async(self, anime_url_or_href):
+        is_url = match(r"(https?://jut\.su/[^/]+)", anime_url_or_href)
+        if is_url:
+            anime_url = is_url.group(0)
+        else:
+            if anime_url_or_href.startswith("/"):
+                anime_url = self.url + anime_url_or_href[1:]
+            else:
+                print("Invalid URL or href. Please provide a valid anime URL or href.")
+                return None
+        async with aiohttp.ClientSession(headers=self.headers) as session:
+            async with session.get(anime_url) as response:
+                is_error_country = 'block_video_text' in await response.text() # there is no html for this so i just digging in js code
+                soup = BeautifulSoup(await response.text(), "html.parser")
+                player = soup.find("div", {"id": "my-player_html5_api", "class": "vjs-tech"})
+                if not player:
+                    if is_error_country:
+                        print(f"Anime is blocked in your country.")
+                    else:
+                        print("Something went wrong")
+                        print("Player:", player)
+                        print("Url:", anime_url)
+                    return None
+                video_url = player["src"]
+                return video_url
+        return None
+    def get_video_link_sync(self, anime_url_or_href):
+        is_url = match(r"(https?://jut\.su/[^/]+)", anime_url_or_href)
+        if is_url:
+            anime_url = is_url.group(0)
+        else:
+            if anime_url_or_href.startswith("/"):
+                anime_url = self.url + anime_url_or_href[1:]
+            else:
+                print("Invalid URL or href. Please provide a valid anime URL or href.")
+                return None
+        response = requests.get(anime_url, timeout=10, headers=self.headers)
+        is_error_country = 'block_video_text' in response.text # there is no html for this so i just digging in js code
+        soup = BeautifulSoup(response.text, "html.parser")
+        player = soup.find("div", {"id": "my-player_html5_api", "class": "vjs-tech"})
+        if not player:
+            if is_error_country:
+                print(f"Anime is blocked in your country.")
+            else:
+                print("Something went wrong")
+                print("Player:", player)
+                print("Url:", anime_url)
+            return None
+        video_url = player["src"]
+        return video_url or None
+    async def download_video_async(self, video_url, save_path, proxy=None):
+        video_url = await self.get_video_link_async(video_url)
+        if video_url:
+            async with aiohttp.ClientSession(headers=self.headers) as session:
+                async with session.get(video_url, proxy=proxy) as response:
+                    with open(save_path, "wb") as file:
+                        while True:
+                            chunk = await response.content.read(1024)
+                            if not chunk:
+                                break
+                            file.write(chunk)
+            print(f"Video downloaded successfully to {save_path}")
+            return True
+        else:
+            print("Failed to download the video.")
+            return False
+    def download_video_sync(self, video_url, save_path, proxy=None):
+        video_url = self.get_video_link_sync(video_url)
+        if video_url:
+            response = requests.get(video_url, headers=self.headers, proxy=proxy)
+            with open(save_path, "wb") as file:
+                for chunk in response.iter_content(chunk_size=1024):
+                    if chunk:
+                        file.write(chunk)
+            print(f"Video downloaded successfully to {save_path}")
+            return True
+        else:
+            print("Failed to download the video.")
+            return False
